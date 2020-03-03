@@ -88,14 +88,12 @@ class ReflexAgent(Agent):
             if dist > furthestFoodDist:
                 furthestFoodDist = dist
 
-        # Distance to closest and furthest food added to break the few cases when total dist to food is the same
-        # for all the actions. At this point there might be a chance that distance to closest/furthest food will 
-        # vary and make pacman take a decision. But this effect is not very prominent of effective. So might as
-        # well ignore it. Keeping it for now though.
+        # Use of "total food distance" and/or "furthest distance" leads to a tie in many cases and thus leaves 
+        # pacman in STOP action and away from ghost.
 
         # Distance metric to ghosts
         totGhostDist = 1 # init to 1 to prevent div by 0
-        extraCostGhost = 0
+        tooCloseGhost = 0
         scaredGhost = 10
         for ghostIdx in range(len(newGhostStates)):
             ghostState = newGhostStates[ghostIdx]
@@ -107,7 +105,12 @@ class ReflexAgent(Agent):
                 ghostDist = util.manhattanDistance(newPos, ghostState.configuration.pos)
                 totGhostDist += ghostDist
                 if ghostDist <= 1:
-                    extraCostGhost -= 200 # negative number
+                    tooCloseGhost -= 200 # negative number
+
+        #totGhostDist = 1 # init to 1 to prevent div by 0
+        #for ghostPos in successorGameState.getGhostPositions():
+        #    ghostDist = util.manhattanDistance(newPos, ghostPos)
+        #    totGhostDist += ghostDist
 
         # Adding this will prevent pacman from stalling, 
         # By making it oscillate. So not useful. Might as well stall
@@ -116,9 +119,13 @@ class ReflexAgent(Agent):
         #    stopCost = 20
          
         #effScore = - stopCost + successorGameState.getScore() + 1/float(totDistFood) + 1/float(closestFoodDist) + 1/float(furthestFoodDist) + totGhostDist + extraCostGhost + scaredGhost
-        effScore = successorGameState.getScore() + 1/float(totDistFood) + 1/float(closestFoodDist) + 1/float(furthestFoodDist) + totGhostDist + extraCostGhost + scaredGhost
+        #effScore = successorGameState.getScore() + 1/float(totDistFood) + 1/float(closestFoodDist) + 1/float(furthestFoodDist) + totGhostDist + extraCostGhost + scaredGhost
+        #effScore = successorGameState.getScore() + 1/float(furthestFoodDist) + totGhostDist + extraCostGhost + scaredGhost
+        #effScore = successorGameState.getScore() + (1/float(furthestFoodDist)) - (1/float(totGhostDist)) #+ extraCostGhost + scaredGhost
+        effScore = successorGameState.getScore() + (1/float(closestFoodDist)) - (1/float(totGhostDist)) + tooCloseGhost + scaredGhost
 
         return effScore
+
 
 def scoreEvaluationFunction(currentGameState):
     """
