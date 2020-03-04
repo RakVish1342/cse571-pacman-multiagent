@@ -162,6 +162,56 @@ class MinimaxAgent(MultiAgentSearchAgent):
       Your minimax agent (question 2)
     """
 
+    def minimax(self, depth, agent, gameState):
+        
+        if agent >= gameState.getNumAgents():
+            agent = 0
+            depth += 1
+
+        if (depth==self.depth or gameState.isWin() or gameState.isLose()):
+            return self.evaluationFunction(gameState)
+        # Agent and depth are independent factors. Not directly correlated.
+        #agent = depth % gameState.getNumAgents() # 0 = pacman = root, 1 = ghost1, 2 = ghost2 ... so on
+
+        # Pacman Related MAX actions
+        elif(agent == 0):
+            pacValues = []
+            possActions = gameState.getLegalActions(agent)
+                
+            for action in possActions:
+                newGameState = gameState.generateSuccessor(agent, action)
+                #pacValues.append( minimax(currState, depth+1, agent+1) )
+                pacValues.append( self.minimax(depth, agent+1, newGameState) )
+
+            maxValue = max(pacValues)
+            #maxPosition = [pacValues == maxValue] # This syntax works only for numpy arrays
+            #if(len(maxPosition) > 1): # If multiple max locations exist
+            #    maxPosition = maxPosition[0]
+
+            maxPosition = [i for i, x in enumerate(pacValues) if x == maxValue]
+            maxAction = possActions[maxPosition[0]]
+            return maxAction                
+
+        # Ghost related MIN actions
+        else:
+            ghostValues = []
+            possActions = gameState.getLegalActions(agent)
+                
+            for action in possActions:
+                newGameState = gameState.generateSuccessor(agent, action)
+                #ghostValues.append( minimax(currState, depth+1, agent+1) )
+                ghostValues.append( self.minimax(depth, agent+1, newGameState) )
+
+            minValue = min(ghostValues)
+            #minPosition = [ghostValues == minValue] # This syntax only works for numpy arrays
+            #if(len(minPosition) > 1): # If multiple min locations exist
+            #    minPosition = minPosition[0]
+
+            minPosition = [i for i, x in enumerate(ghostValues) if x == minValue]
+            minAction = possActions[minPosition[0]]
+            return minAction         
+
+
     def getAction(self, gameState):
         """
           Returns the minimax action from the current gameState using self.depth
@@ -180,7 +230,14 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #finalDepth = self.depth
+        #currDepth = 0
+
+        #action = self.minimax(currDepth, gameState)
+        action = self.minimax(0, 0, gameState)
+        return action
+
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
