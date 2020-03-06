@@ -423,6 +423,57 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
       Your expectimax agent (question 4)
     """
 
+    # Implemented the on the fly max setting
+    def minimax(self, depth, agent, gameState):
+        
+        finalDepth = self.depth
+        totAgents = gameState.getNumAgents()
+
+        if agent >= totAgents:
+            agent = 0 # Finished going through one set of max-min-min-min layers, so reset the agent to pacman
+            depth += 1 # Increment depth once one set is finished.
+
+        if (depth==finalDepth or gameState.isWin() or gameState.isLose()):
+            return ("Dummy Action", self.evaluationFunction(gameState)) # Dummy value added since minimax is passing about action-value pairs. 
+
+        else: 
+            # Pacman Related MAX actions
+            # Pacman is still a MAX agent. It still takes the best actions possible.
+            # So no averaging/expectation layer here
+            if(agent == 0):
+                possActions = gameState.getLegalActions(agent)
+                maxValue = -float("Inf")
+                maxAction = None
+                
+                for action in possActions:
+                    newGameState = gameState.generateSuccessor(agent, action)
+                    _, val = self.minimax(depth, agent+1, newGameState)
+                    if val > maxValue:
+                        maxValue = val
+                        maxAction = action
+
+                return (maxAction, maxValue)
+
+            # Ghost related MIN actions
+            else:
+                possActions = gameState.getLegalActions(agent)
+                #expectiValue = float("Inf")
+                expectiValue = []
+                minAction = None
+                probab = 1/len(possActions)
+                
+                for action in possActions:
+                    newGameState = gameState.generateSuccessor(agent, action)
+                    _, val = self.minimax(depth, agent+1, newGameState)
+                    expectiValue.append(val)
+
+                 # Avg value = equal probability OR in loop do: expectiValue += val * probab
+                expectiValue = sum(expectiValue) / len(expectiValue)
+                randActionIdx = random.randint(0, len(possActions)-1)
+                minAction = possActions[randActionIdx]
+                return (minAction, expectiValue)
+
+
     def getAction(self, gameState):
         """
           Returns the expectimax action using self.depth and self.evaluationFunction
@@ -431,7 +482,15 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
           legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        # Implementing Mini-Max agent but with Min layers having average value
+        # Avg value ie. equal probab of any of the actions happening.
+        # NO alpha beta pruning here since there is no guarantee of what the actual
+        # value will be in the expect layer...all depends on the probability and so
+        # can NOT discount any one possible values entirely 
+        actionValue = self.minimax(0, 0, gameState)
+        action = actionValue[0]
+        return action
+
 
 def betterEvaluationFunction(currentGameState):
     """
