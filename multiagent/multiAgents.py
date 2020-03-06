@@ -263,7 +263,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 for action in possActions:
                     newGameState = gameState.generateSuccessor(agent, action)
                     _, val = self.minimax(depth, agent+1, newGameState)
-
                     if val > maxValue:
                         maxValue = val
                         maxAction = action
@@ -336,12 +335,87 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
       Your minimax agent with alpha-beta pruning (question 3)
     """
 
+    #def minimax(self, depth, agent, gameState, alphabeta):
+    def minimax(self, depth, agent, gameState, alpha, beta):
+        
+        finalDepth = self.depth
+        totAgents = gameState.getNumAgents()
+
+        if agent >= totAgents:
+            agent = 0 # Finished going through one set of max-min-min-min layers, so reset the agent to pacman
+            depth += 1 # Increment depth once one set is finished.
+
+        if (depth==finalDepth or gameState.isWin() or gameState.isLose()):
+            return ("Dummy Action", self.evaluationFunction(gameState)) # Dummy value added since minimax is passing about action-value pairs. 
+        # Agent and depth are independent factors. Not directly correlated.
+        #agent = depth % gameState.getNumAgents() # 0 = pacman = root, 1 = ghost1, 2 = ghost2 ... so on
+
+        else: 
+            # Pacman Related MAX actions
+            if(agent == 0):
+                possActions = gameState.getLegalActions(agent)
+                maxValue = -float("Inf")
+                maxAction = None
+                for action in possActions:
+                    newGameState = gameState.generateSuccessor(agent, action)
+                    #_, val = self.minimax(depth, agent+1, newGameState, alphabeta)
+                    _, val = self.minimax(depth, agent+1, newGameState, alpha, beta)
+                    if val > maxValue:
+                        maxValue = val
+                        maxAction = action
+
+                    # Alpha Beta pruning logic
+                    # If curr value of node is larger than existing beta (best MIN value toward root)
+                    #if maxValue > alphabeta[1]:
+                    #    return (maxAction, maxValue)
+                    ## update alpha
+                    #alphabeta[0] = max(alphabeta[0], maxValue)
+                    if maxValue > beta:
+                        return (maxAction, maxValue)
+                    # update alpha
+                    alpha = max(alpha, maxValue)
+
+                return (maxAction, maxValue)
+
+            # Ghost related MIN actions
+            else:
+                possActions = gameState.getLegalActions(agent)
+                minValue = float("Inf")
+                minAction = None
+                
+                for action in possActions:
+                    newGameState = gameState.generateSuccessor(agent, action)
+                    #_, val = self.minimax(depth, agent+1, newGameState, alphabeta)
+                    _, val = self.minimax(depth, agent+1, newGameState, alpha, beta)
+                    if val < minValue:
+                        minValue = val
+                        minAction = action
+
+                    # Alpha Beta pruning logic
+                    # If curr value of node is smaller than existing alpha (best MAX value toward root)
+                    #if minValue < alphabeta[0]:
+                    #    return (minAction, minValue)
+                    ## update beta
+                    #alphabeta[1] = min(alphabeta[1], minValue)
+                    if minValue < alpha:
+                        return (minAction, minValue)
+                    # update beta
+                    beta = min(beta, minValue)
+
+                return (minAction, minValue)
+
     def getAction(self, gameState):
         """
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        #alphabeta = [-float("Inf"), float("Inf")]
+        alpha = -float("Inf")
+        beta = float("Inf")
+        #actionValue = self.minimax(0, 0, gameState, alphabeta)
+        actionValue = self.minimax(0, 0, gameState, alpha, beta)
+        action = actionValue[0]
+        return action
 
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
