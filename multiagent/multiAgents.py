@@ -497,10 +497,53 @@ def betterEvaluationFunction(currentGameState):
       Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
       evaluation function (question 5).
 
-      DESCRIPTION: <write something here so we know what you did>
+      DESCRIPTION: Similar to the evaluation function of the Reflex Agent. The Pacman 
+      tries to avoid the ghost, go towards food and has an extra penalty when its too
+      close to the ghost
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    # Same as the earlier evaluator function. Just using the current state info
+    # rather than state info of the succeeding state.
+    newPos = currentGameState.getPacmanPosition()
+    newFood = currentGameState.getFood()
+    newGhostStates = currentGameState.getGhostStates()
+    newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+
+    # Dist metric to Food
+    foodList = util.matrixAsList(newFood.data) # Locations of all food
+    totDistFood = 1 # init to 1 to prevent div by 0
+    closestFoodDist = 999999
+    furthestFoodDist = 1
+    for food in foodList:
+        dist = util.manhattanDistance(newPos, food)
+        totDistFood += dist
+        if dist < closestFoodDist:
+            closestFoodDist = dist
+        if dist > furthestFoodDist:
+            furthestFoodDist = dist
+
+    # Distance metric to ghosts
+    totGhostDist = 1 # init to 1 to prevent div by 0
+    tooCloseGhost = 0
+    scaredGhost = 10
+    for ghostIdx in range(len(newGhostStates)):
+        ghostState = newGhostStates[ghostIdx]
+        scaredTime = newScaredTimes[ghostIdx]
+        if scaredTime > 0: # If ghost in deactive state, don't care about it's distance
+            scaredGhost += 50
+            continue
+        else:
+            ghostDist = util.manhattanDistance(newPos, ghostState.configuration.pos)
+            totGhostDist += ghostDist
+            if ghostDist <= 1:
+                tooCloseGhost -= 200 # negative number
+
+    effScore = currentGameState.getScore() + (1/float(closestFoodDist)) - 0.3*(1/float(totGhostDist)) + tooCloseGhost + scaredGhost
+
+    # Removing the scoredGhost dropped the average score to 850-950. 
+
+    return effScore
+
 
 # Abbreviation
 better = betterEvaluationFunction
